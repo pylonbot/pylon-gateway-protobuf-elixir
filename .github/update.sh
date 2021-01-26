@@ -1,6 +1,9 @@
 #!/bin/bash
-echo "> installing elixir + protbuf-compiler"
+set -x
+
+echo "> installing elixir & protobuf-compiler"
 sudo apt-get install -y elixir protobuf-compiler
+mix local.hex --force
 
 echo "> installing protoc"
 export GO111MODULE=on

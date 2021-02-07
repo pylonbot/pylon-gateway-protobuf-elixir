@@ -1,17 +1,106 @@
+defmodule Pylon.Discord.V1.Rest.RestError.UnknownError do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          http_status: non_neg_integer,
+          code: non_neg_integer,
+          message: String.t()
+        }
+  defstruct [:http_status, :code, :message]
+
+  field :http_status, 1, type: :uint32
+  field :code, 2, type: :uint32
+  field :message, 3, type: :string
+end
+
+defmodule Pylon.Discord.V1.Rest.RestError.ValidationError.Field do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          path: String.t(),
+          code: String.t(),
+          message: String.t()
+        }
+  defstruct [:path, :code, :message]
+
+  field :path, 1, type: :string
+  field :code, 2, type: :string
+  field :message, 3, type: :string
+end
+
+defmodule Pylon.Discord.V1.Rest.RestError.ValidationError do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          message: String.t(),
+          fields: [Pylon.Discord.V1.Rest.RestError.ValidationError.Field.t()]
+        }
+  defstruct [:message, :fields]
+
+  field :message, 1, type: :string
+  field :fields, 2, repeated: true, type: Pylon.Discord.V1.Rest.RestError.ValidationError.Field
+end
+
+defmodule Pylon.Discord.V1.Rest.RestError.ResourceNotFound do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          code: non_neg_integer,
+          message: String.t()
+        }
+  defstruct [:code, :message]
+
+  field :code, 1, type: :uint32
+  field :message, 2, type: :string
+end
+
+defmodule Pylon.Discord.V1.Rest.RestError.AccessDenied do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          code: non_neg_integer,
+          message: String.t()
+        }
+  defstruct [:code, :message]
+
+  field :code, 1, type: :uint32
+  field :message, 2, type: :string
+end
+
+defmodule Pylon.Discord.V1.Rest.RestError.RateLimited do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          global: boolean,
+          retry_at: non_neg_integer
+        }
+  defstruct [:global, :retry_at]
+
+  field :global, 1, type: :bool
+  field :retry_at, 2, type: :uint32
+end
+
 defmodule Pylon.Discord.V1.Rest.RestError do
   @moduledoc false
   use Protobuf, syntax: :proto3
 
   @type t :: %__MODULE__{
-          status: non_neg_integer,
-          code: non_neg_integer,
-          message: String.t()
+          error_type: {atom, any}
         }
-  defstruct [:status, :code, :message]
+  defstruct [:error_type]
 
-  field :status, 1, type: :uint32
-  field :code, 2, type: :uint32
-  field :message, 3, type: :string
+  oneof :error_type, 0
+  field :unknown_error, 1, type: Pylon.Discord.V1.Rest.RestError.UnknownError, oneof: 0
+  field :validation_error, 2, type: Pylon.Discord.V1.Rest.RestError.ValidationError, oneof: 0
+  field :resource_not_found, 3, type: Pylon.Discord.V1.Rest.RestError.ResourceNotFound, oneof: 0
+  field :access_denied, 4, type: Pylon.Discord.V1.Rest.RestError.AccessDenied, oneof: 0
+  field :rate_limited, 5, type: Pylon.Discord.V1.Rest.RestError.RateLimited, oneof: 0
 end
 
 defmodule Pylon.Discord.V1.Rest.ModifyGuildRequest do
@@ -978,6 +1067,92 @@ defmodule Pylon.Discord.V1.Rest.DeleteChannelResponse do
   oneof :response, 0
   field :error, 1, type: Pylon.Discord.V1.Rest.RestError, oneof: 0
   field :data, 2, type: Google.Protobuf.Empty, oneof: 0
+end
+
+defmodule Pylon.Discord.V1.Rest.GetChannelMessagesRequest do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          channel_id: non_neg_integer,
+          around: Pylon.Discord.V1.Model.SnowflakeValue.t() | nil,
+          before: Pylon.Discord.V1.Model.SnowflakeValue.t() | nil,
+          after: Pylon.Discord.V1.Model.SnowflakeValue.t() | nil,
+          limit: non_neg_integer
+        }
+  defstruct [:channel_id, :around, :before, :after, :limit]
+
+  field :channel_id, 1, type: :fixed64
+  field :around, 2, type: Pylon.Discord.V1.Model.SnowflakeValue
+  field :before, 3, type: Pylon.Discord.V1.Model.SnowflakeValue
+  field :after, 4, type: Pylon.Discord.V1.Model.SnowflakeValue
+  field :limit, 5, type: :uint32
+end
+
+defmodule Pylon.Discord.V1.Rest.GetChannelMessagesResponse.Data do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          messages: [Pylon.Discord.V1.Model.MessageData.t()]
+        }
+  defstruct [:messages]
+
+  field :messages, 1, repeated: true, type: Pylon.Discord.V1.Model.MessageData
+end
+
+defmodule Pylon.Discord.V1.Rest.GetChannelMessagesResponse do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          response: {atom, any}
+        }
+  defstruct [:response]
+
+  oneof :response, 0
+  field :error, 1, type: Pylon.Discord.V1.Rest.RestError, oneof: 0
+  field :data, 2, type: Pylon.Discord.V1.Rest.GetChannelMessagesResponse.Data, oneof: 0
+end
+
+defmodule Pylon.Discord.V1.Rest.GetChannelMessageRequest do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          channel_id: non_neg_integer,
+          message_id: non_neg_integer
+        }
+  defstruct [:channel_id, :message_id]
+
+  field :channel_id, 1, type: :fixed64
+  field :message_id, 2, type: :fixed64
+end
+
+defmodule Pylon.Discord.V1.Rest.GetChannelMessageResponse.Data do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          message: Pylon.Discord.V1.Model.MessageData.t() | nil
+        }
+  defstruct [:message]
+
+  field :message, 1, type: Pylon.Discord.V1.Model.MessageData
+end
+
+defmodule Pylon.Discord.V1.Rest.GetChannelMessageResponse do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          response: {atom, any}
+        }
+  defstruct [:response]
+
+  oneof :response, 0
+  field :error, 1, type: Pylon.Discord.V1.Rest.RestError, oneof: 0
+  field :data, 2, type: Pylon.Discord.V1.Rest.GetChannelMessageResponse.Data, oneof: 0
 end
 
 defmodule Pylon.Discord.V1.Rest.CreateMessageRequest.AllowedMentions.AllowedMentionTypes do

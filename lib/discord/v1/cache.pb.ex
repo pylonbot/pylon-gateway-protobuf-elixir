@@ -112,6 +112,30 @@ defmodule Pylon.Discord.V1.Cache.GetGuildMemberResponse do
   field :member, 1, type: Pylon.Discord.V1.Model.MemberData
 end
 
+defmodule Pylon.Discord.V1.Cache.GetGuildMemberPresenceRequest do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          user_id: non_neg_integer
+        }
+  defstruct [:user_id]
+
+  field :user_id, 1, type: :fixed64
+end
+
+defmodule Pylon.Discord.V1.Cache.GetGuildMemberPresenceResponse do
+  @moduledoc false
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+          presence: Pylon.Discord.V1.Model.PresenceData.t() | nil
+        }
+  defstruct [:presence]
+
+  field :presence, 1, type: Pylon.Discord.V1.Model.PresenceData
+end
+
 defmodule Pylon.Discord.V1.Cache.ListGuildRolesRequest do
   @moduledoc false
   use Protobuf, syntax: :proto3
